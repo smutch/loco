@@ -1,0 +1,15 @@
+[package]
+name = "loco"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+structopt = "0.3"
+xdg = "2.4"
+config = "0.11"
+serde_derive = "1.0"
+serde = "1.0"
+ssh = "0.1"
+anyhow = "1.0"
