@@ -40,7 +40,7 @@ lazy_static! {
 
 #[derive(StructOpt, Debug)]
 struct Opt {
-    #[structopt(parse(from_os_str))]
+    #[structopt(parse(from_os_str), required=true)]
     src: Vec<PathBuf>,
     #[structopt(parse(from_os_str), short, default_value = LOCOCONFIG.dest.to_str().unwrap())]
     dest: PathBuf,
