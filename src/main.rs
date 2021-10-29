@@ -2,7 +2,6 @@ use anyhow::{format_err, Context, Result};
 use colored::Colorize;
 use lazy_static::lazy_static;
 use serde_derive::Deserialize;
-use spinners::{Spinner, Spinners};
 use std::io::Write;
 use std::path::PathBuf;
 use std::process::Command;
@@ -63,12 +62,7 @@ fn main() -> Result<()> {
         if !dest.ends_with('/') { "/" } else { "" }
     );
 
-    // If we don't have a trailing slash in our source then we want to use the '--delete' option to
-    // remove files from the destination that shouldn't be there.
-    Spinner::new(
-        &Spinners::Dots9,
-        format!("{}: ", "Grabbing files...".blue()),
-    );
+    println!("Transferring:");
 
     opt.src
         .iter()
@@ -79,17 +73,24 @@ fn main() -> Result<()> {
                 src.to_str().unwrap()
             ))?;
 
-            let source = src.to_str().unwrap();
-
             let connection = &format!("ssh -p{} -l{}", &opt.port, &opt.username);
-            let mut args = vec!["-r", "-n", "-e", connection];
+            let mut args = vec!["-rv", "-n", "-e", connection];
 
+            // If we don't have a trailing slash in our source then we want to use the '--delete' option to
+            // remove files from the destination that shouldn't be there.
+            let source = src.to_str().unwrap();
             if !source.ends_with('/') {
                 args.push("--delete");
             }
 
             args.push(source);
             args.push(dest);
+
+            if opt.verbose {
+                println!("\trsync {}", args.join(" "));
+            } else {
+                println!("\t{}", source);
+            }
 
             let command = Command::new("rsync")
                 .args(&args)
@@ -99,7 +100,6 @@ fn main() -> Result<()> {
             match command.status.success() {
                 true => {
                     if opt.verbose {
-                        println!();
                         std::io::stdout().write_all(command.stdout.as_slice())?;
                     }
                     Ok(())
