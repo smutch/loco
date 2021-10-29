@@ -218,6 +218,7 @@ dependencies = [
  "anyhow",
  "colored",
  "config",
+ "lazy_static",
  "serde 1.0.130",
  "serde_derive",
  "spinners",
