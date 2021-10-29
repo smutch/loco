@@ -68,49 +68,52 @@ fn main() -> Result<()> {
     Spinner::new(
         &Spinners::Dots9,
         format!("{}: ", "Grabbing files...".blue()),
-        );
+    );
 
-    opt.src.iter().try_for_each(|src| {
-        std::fs::metadata(&src).context(format!(
+    opt.src
+        .iter()
+        .try_for_each(|src| {
+            std::fs::metadata(&src).context(format!(
                 "{} {}",
                 "Failed to resolve".red(),
                 src.to_str().unwrap()
-                ))?;
+            ))?;
 
-        let source = src.to_str().unwrap();
+            let source = src.to_str().unwrap();
 
-        let connection = &format!("ssh -p{} -l{}", &opt.port, &opt.username);
-        let mut args = vec!["-r", "-n", "-e", connection];
+            let connection = &format!("ssh -p{} -l{}", &opt.port, &opt.username);
+            let mut args = vec!["-r", "-n", "-e", connection];
 
-        if !source.ends_with('/') {
-            args.push("--delete");
-        }
+            if !source.ends_with('/') {
+                args.push("--delete");
+            }
 
-        args.push(source);
-        args.push(dest);
+            args.push(source);
+            args.push(dest);
 
-        let command = Command::new("rsync")
-            .args(&args)
-            .output()
-            .context("Failed to launch rsync command")?;
+            let command = Command::new("rsync")
+                .args(&args)
+                .output()
+                .context("Failed to launch rsync command")?;
 
-        match command.status.success() {
-            true => {
-                if opt.verbose {
-                    println!();
-                    std::io::stdout().write_all(command.stdout.as_slice())?;
+            match command.status.success() {
+                true => {
+                    if opt.verbose {
+                        println!();
+                        std::io::stdout().write_all(command.stdout.as_slice())?;
+                    }
+                    Ok(())
                 }
-                Ok(())
+                false => {
+                    std::io::stdout().write_all(command.stdout.as_slice())?;
+                    let errors = format!("\n{}\n", String::from_utf8(command.stderr).unwrap());
+                    std::io::stderr().write_all(errors.as_bytes())?;
+                    Err(format_err!("{}", "Rsync command failed!".red()))
+                }
             }
-            false => {
-                std::io::stdout().write_all(command.stdout.as_slice())?;
-                let errors = format!("\n{}\n", String::from_utf8(command.stderr).unwrap());
-                std::io::stderr().write_all(errors.as_bytes())?;
-                Err(format_err!("{}", "Rsync command failed!".red()))
-            }
-        }
-    }).map(|res| {
-        println!("{}", "...transfer complete".green().bold());
-        res
-    })
+        })
+        .map(|res| {
+            println!("{}", "...transfer complete".green().bold());
+            res
+        })
 }
